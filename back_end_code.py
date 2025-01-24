@@ -1,8 +1,8 @@
-
 import pandas as pd
 import numpy as np
 import requests
 from datetime import datetime
+import streamlit as st
 import time
 import anthropic
 
@@ -198,30 +198,21 @@ def generate_tweet(symbol, analysis_summary, style):
     """生成推文内容"""
     try:
         style_prompts = {
-            "女生": "以女生的语气",
-            "交易员": "以交易员的专业语气",
-            "分析师": "以金融分析师的专业语气",
-            "失败交易员": "以交易屡屡亏损的交易员的辛辣讽刺语气"
+            "女生": "少女风",
+            "交易员": "专业简洁",
+            "分析师": "严谨专业",
+            "失败交易员": "讽刺幽默"
         }
-
-        style_prompt = style_prompts.get(style, "")
-
-        prompt = f"""
-        {style_prompt} 请根据以下分析总结，为交易对 {symbol}/USDT 撰写一条简洁且专业的推文，适合发布在推特上。推文应包括当前价格、市场情绪、主要趋势以及操作建议。限制在280个字符以内。
-
-        分析总结：
-        {analysis_summary}
-        """
+        
+        prompt = f"{style_prompts.get(style, '')}风格，{symbol}/USDT分析推文(价格/趋势/建议，限280字):\n{analysis_summary}"
+        
         response = client.messages.create(
             model=claude_model,
             max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
         tweet = response.content[0].text.strip()
-        # 确保推文不超过280字符
-        if len(tweet) > 280:
-            tweet = tweet[:277] + "..."
-        return tweet
+        return tweet[:277] + "..." if len(tweet) > 280 else tweet
     except Exception as e:
         return f"推文生成失败: {str(e)}"
 
