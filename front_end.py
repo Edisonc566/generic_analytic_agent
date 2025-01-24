@@ -88,20 +88,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 主界面
-# 创建两列布局
-col1, col2 = st.columns([3, 1])
+# 用户输入代币代码
+symbol = st.text_input(
+    "输入代币代码（例如：BTC、ETH、PEPE）",
+    value="BTC",
+    label_visibility="hidden"
+).upper()
 
-with col1:
-    # 用户输入代币代码
-    symbol = st.text_input(
-        "输入代币代码（例如：BTC、ETH、PEPE）",
-        value="BTC",
-        label_visibility="hidden"
-    ).upper()
-
-with col2:
-    # 分析按钮
-    analyze_button = st.button("开始分析", type="primary", use_container_width=True)
+# 分析按钮
+analyze_button = st.button("开始分析", type="primary", use_container_width=True)
 
 # 添加分割线
 st.markdown("---")

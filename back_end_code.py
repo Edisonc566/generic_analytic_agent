@@ -6,6 +6,14 @@ from datetime import datetime
 import time
 import anthropic
 
+# graph TD
+#     A[check_symbol_exists] --> B[get_klines_data]
+#     B --> C[calculate_indicators]
+#     C --> D[analyze_trend]
+#     D --> E[get_ai_analysis]
+#     F[get_market_sentiment] --> E
+#     G[generate_trading_plan] --> E
+
 # 设置 Claude API 配置
 CLAUDE_API_KEY = "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"  # 替换为您的 Claude API key
 client = anthropic.Client(api_key=CLAUDE_API_KEY)
