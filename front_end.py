@@ -28,18 +28,80 @@ st.markdown("""
 - 生成多种风格的分析总结推文
 """)
 
+# 添加自定义 CSS 样式
+st.markdown("""
+<style>
+    /* 整体页面样式 */
+    .main {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* 标题样式 */
+    h1 {
+        color: #1E88E5;
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 2rem !important;
+    }
+    
+    /* 子标题样式 */
+    h2, h3 {
+        color: #333;
+        font-weight: 600 !important;
+        margin-top: 1.5rem !important;
+    }
+    
+    /* 卡片样式 */
+    .stMetric {
+        background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        padding: 1rem;
+    }
+    
+    /* 文本区域样式 */
+    .stTextArea textarea {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        background: #fafafa;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* 按钮样式 */
+    .stButton button {
+        border-radius: 8px;
+        padding: 0.5rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    /* 分割线样式 */
+    hr {
+        margin: 2rem 0;
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0));
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # 主界面
 # 创建两列布局
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([3, 1])
 
 with col1:
     # 用户输入代币代码
-    symbol = st.text_input("输入代币代码（例如：BTC、ETH、PEPE）", value="BTC", label_visibility="hidden").upper()
+    symbol = st.text_input(
+        "输入代币代码（例如：BTC、ETH、PEPE）",
+        value="BTC",
+        label_visibility="hidden"
+    ).upper()
 
 with col2:
     # 分析按钮
-    analyze_button = st.button("开始分析", type="primary")
+    analyze_button = st.button("开始分析", type="primary", use_container_width=True)
 
 # 添加分割线
 st.markdown("---")
@@ -93,31 +155,20 @@ if analyze_button:
                 "失败交易员风格": "失败交易员"
             }
 
-            # 创建两列布局来显示推文
-            col1, col2 = st.columns(2)
-
-            # 生成并显示所有风格的推文
-            for i, (style_name, style) in enumerate(styles.items()):
-                tweet = generate_tweet(symbol, analysis_summary, style)
-                # 在左列显示前两个风格
-                if i < 2:
-                    with col1:
-                        st.subheader(f"📝 {style_name}")
+            # 使用容器包装推文部分
+            with st.container():
+                st.markdown("### 📊 多风格推文建议")
+                tweet_cols = st.columns(2)
+                
+                for i, (style_name, style) in enumerate(styles.items()):
+                    tweet = generate_tweet(symbol, analysis_summary, style)
+                    with tweet_cols[i % 2]:
+                        st.markdown(f"#### {style_name}")
                         st.text_area(
                             label="",
                             value=tweet,
                             height=150,
-                            key=f"tweet_{style}"
-                        )
-                # 在右列显示后两个风格
-                else:
-                    with col2:
-                        st.subheader(f"📝 {style_name}")
-                        st.text_area(
-                            label="",
-                            value=tweet,
-                            height=150,
-                            key=f"tweet_{style}"
+                            key=f"tweet_{style}",
                         )
 
             # 添加时间戳
@@ -127,6 +178,13 @@ if analyze_button:
 
 # 自动刷新选项移到侧边栏
 with st.sidebar:
+    st.markdown("""
+    <style>
+        .sidebar .sidebar-content {
+            background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+        }
+    </style>
+    """, unsafe_allow_html=True)
     st.subheader("设置")
     auto_refresh = st.checkbox("启用自动刷新")
     if auto_refresh:
