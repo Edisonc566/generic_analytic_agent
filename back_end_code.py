@@ -23,8 +23,11 @@ def load_claude_api_key() -> str:
     若全部失败则抛出 RuntimeError。
     """
     # ① Streamlit Cloud / 本地 secrets.toml
-    if "CLAUDE_API_KEY" in st.secrets:
-        return st.secrets["CLAUDE_API_KEY"]
+    try:
+        if "CLAUDE_API_KEY" in st.secrets:
+            return st.secrets["CLAUDE_API_KEY"]
+    except Exception:
+        pass  # 如果 st.secrets 不存在或访问出错，继续尝试其他方式
 
     # ② 本地开发：./secrets.txt，格式示例：CLAUDE_API_KEY=sk-antropic-xxxx
     secrets_file = Path(__file__).resolve().parent / "secrets.txt"
