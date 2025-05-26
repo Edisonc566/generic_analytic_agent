@@ -5,7 +5,7 @@ from datetime import datetime
 import streamlit as st
 import time
 import anthropic
-
+from pathlib import Path
 # graph TD
 #     A[check_symbol_exists] --> B[get_klines_data]
 #     B --> C[calculate_indicators]
@@ -14,8 +14,38 @@ import anthropic
 #     F[get_market_sentiment] --> E
 #     G[generate_trading_plan] --> E
 
+
+
+
+def load_claude_api_key() -> str:
+    """
+    依次尝试从 ① st.secrets ② secrets.txt ③ 环境变量 获取 Claude API Key。
+    若全部失败则抛出 RuntimeError。
+    """
+    # ① Streamlit Cloud / 本地 secrets.toml
+    if "CLAUDE_API_KEY" in st.secrets:
+        return st.secrets["CLAUDE_API_KEY"]
+
+    # ② 本地开发：./secrets.txt，格式示例：CLAUDE_API_KEY=sk-antropic-xxxx
+    secrets_file = Path(__file__).resolve().parent / "secrets.txt"
+    if secrets_file.exists():
+        with secrets_file.open() as f:
+            for line in f:
+                if line.startswith("CLAUDE_API_KEY"):
+                    return line.split("=", 1)[1].strip()
+
+    # ③ 备选：环境变量
+    if key := os.getenv("CLAUDE_API_KEY"):
+        return key
+
+    raise RuntimeError(
+        "Claude API key not found. "
+        "· 在 Streamlit Cloud 请在 App › Settings › Secrets 添加 CLAUDE_API_KEY\n"
+        "· 本地请创建 secrets.txt 并写入 CLAUDE_API_KEY=<your_key>\n"
+        "· 或导出环境变量 export CLAUDE_API_KEY=<your_key>"
+    )
 # 设置 Claude API 配置
-CLAUDE_API_KEY: str = st.secrets["CLAUDE_API_KEY"]
+CLAUDE_API_KEY: str = load_claude_api_key()
 
 client = anthropic.Client(api_key=CLAUDE_API_KEY)
 claude_model = "claude-3-opus-20240229"  # claude_model="claude-3-5-sonnet-20241022"
