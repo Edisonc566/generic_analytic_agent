@@ -15,7 +15,8 @@ import anthropic
 #     G[generate_trading_plan] --> E
 
 # 设置 Claude API 配置
-CLAUDE_API_KEY = "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"  # 替换为您的 Claude API key
+CLAUDE_API_KEY: str = st.secrets["CLAUDE_API_KEY"]
+
 client = anthropic.Client(api_key=CLAUDE_API_KEY)
 claude_model = "claude-3-opus-20240229"  # claude_model="claude-3-5-sonnet-20241022"
 # Binance API 端点
@@ -34,7 +35,7 @@ def check_symbol_exists(symbol):
     """检查交易对是否存在"""
     try:
         info_url = f"{BINANCE_API_URL}/exchangeInfo"
-        response = requests.get(info_url)
+        response = requests.get(info_url, timeout=10)
         response.raise_for_status()
         symbols = [s['symbol'] for s in response.json()['symbols']]
         return f"{symbol}USDT" in symbols
