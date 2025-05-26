@@ -1,0 +1,10 @@
+# ——核心依赖——
+streamlit>=1.24          # Web UI 框架
+pandas>=2.0              # 数据分析
+numpy>=1.23              # 数值运算
+requests>=2.28           # HTTP 调用 Binance / 其它行情 API
+anthropic>=0.17          # Claude API SDK
+
+# ——可选：若未来扩展——
+# python-dotenv          # 读取本地 .env
+# matplotlib             # 画图
