@@ -6,6 +6,7 @@ import streamlit as st
 import time
 import anthropic
 from pathlib import Path
+import os
 # graph TD
 #     A[check_symbol_exists] --> B[get_klines_data]
 #     B --> C[calculate_indicators]
