@@ -160,10 +160,11 @@ if analyze_button:
                     with tweet_cols[i % 2]:
                         st.markdown(f"#### {style_name}")
                         st.text_area(
-                            label="",
+                            label="Generated tweet",
                             value=tweet,
                             height=150,
                             key=f"tweet_{style}",
+                            label_visibility="collapsed", 
                         )
 
             # 添加时间戳
