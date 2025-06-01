@@ -25,7 +25,7 @@ def load_claude_api_key() -> str:
     """
     # ① Streamlit Cloud / 本地 secrets.toml
     try:
-        if "CLAUDE_API_KEY" in st.secrets:
+        if hasattr(st, 'secrets') and st.secrets and "CLAUDE_API_KEY" in st.secrets:
             return st.secrets["CLAUDE_API_KEY"]
     except Exception:
         pass  # 如果 st.secrets 不存在或访问出错，继续尝试其他方式
@@ -48,13 +48,17 @@ def load_claude_api_key() -> str:
         "· 本地请创建 secrets.txt 并写入 CLAUDE_API_KEY=<your_key>\n"
         "· 或导出环境变量 export CLAUDE_API_KEY=<your_key>"
     )
+
+# === 全局常量 ===
 # 设置 Claude API 配置
 CLAUDE_API_KEY: str = load_claude_api_key()
 
 client = anthropic.Client(api_key=CLAUDE_API_KEY)
 claude_model = "claude-3-opus-20240229"  # claude_model="claude-3-5-sonnet-20241022"
 # Binance API 端点
-BINANCE_API_URL = "https://api.binance.com/api/v3"
+# BINANCE_API_URL = "https://api.binance.com/api/v3"
+
+BINANCE_API_URL = "https://api.binance.us/api/v3"   # ← 去掉结尾斜杠，统一在拼接时补 /
 
 # 定义时间周期
 TIMEFRAMES = {
@@ -65,46 +69,132 @@ TIMEFRAMES = {
     "1d": {"interval": "1d", "name": "日线"}
 }
 
-def check_symbol_exists(symbol):
-    """检查交易对是否存在"""
+# def check_symbol_exists(symbol):
+#     """检查交易对是否存在"""
+#     try:
+#         info_url = f"{BINANCE_API_URL}/exchangeInfo" # Note: the api url may be different for different API url
+#         response = requests.get(info_url, timeout=10)
+#         response.raise_for_status()
+#         symbols = [s['symbol'] for s in response.json()['symbols']]
+#         return f"{symbol}USDT" in symbols
+#     except Exception as e:
+#         st.error(f"检查交易对时发生错误: {str(e)}")
+#         return False
+
+# def get_klines_data(symbol, interval, limit=200):
+#     """获取K线数据"""
+#     try:
+#         klines_url = f"{BINANCE_API_URL}/klines"
+#         params = {
+#             "symbol": f"{symbol}USDT",
+#             "interval": interval,
+#             "limit": limit
+#         }
+#         response = requests.get(klines_url, params=params)
+#         response.raise_for_status()
+
+#         # 处理K线数据
+#         df = pd.DataFrame(response.json(), columns=[
+#             'timestamp', 'open', 'high', 'low', 'close', 'volume',
+#             'close_time', 'quote_volume', 'trades', 'taker_buy_base',
+#             'taker_buy_quote', 'ignore'
+#         ])
+
+#         # 转换数据类型
+#         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+#         for col in ['open', 'high', 'low', 'close', 'volume']:
+#             df[col] = df[col].astype(float)
+
+#         return df
+#     except Exception as e:
+#         st.error(f"获取K线数据时发生错误: {str(e)}")
+#         return None
+
+
+
+
+
+# ========== 工具函数 ==========
+def _build_url(endpoint: str) -> str:
+    """辅助：将端点拼成完整 URL，避免出现 //"""
+    return f"{BINANCE_API_URL}/{endpoint.lstrip('/')}"
+
+# ========== 业务函数 ==========
+def check_symbol_exists(symbol: str) -> bool:
+    """
+    检查某现货交易对（symbol + USDT）是否在 Binance.US 上线
+    Parameters
+    ----------
+    symbol : str
+        例如 "BTC"、"ETH"
+    Returns
+    -------
+    bool
+        True 表示存在；False 表示不存在或请求出错
+    """
     try:
-        info_url = f"{BINANCE_API_URL}/exchangeInfo"
+        info_url = _build_url("exchangeInfo")
         response = requests.get(info_url, timeout=10)
         response.raise_for_status()
-        symbols = [s['symbol'] for s in response.json()['symbols']]
-        return f"{symbol}USDT" in symbols
+
+        symbols = [s["symbol"] for s in response.json()["symbols"]]
+        return f"{symbol.upper()}USDT" in symbols
+
     except Exception as e:
         st.error(f"检查交易对时发生错误: {str(e)}")
         return False
 
-def get_klines_data(symbol, interval, limit=200):
-    """获取K线数据"""
+
+def get_klines_data(symbol: str, interval: str, limit: int = 200) -> pd.DataFrame | None:
+    """
+    获取指定交易对的 K 线数据
+
+    Parameters
+    ----------
+    symbol : str
+        例如 "BTC"
+    interval : str
+        例如 "1m", "15m", "1h", "1d" 等
+    limit : int, optional
+        单次拉取条数（默认 200，最大 1000）
+
+    Returns
+    -------
+    pd.DataFrame | None
+        返回列包含：timestamp, open, high, low, close, volume, ...
+        出错时返回 None
+    """
     try:
-        klines_url = f"{BINANCE_API_URL}/klines"
+        klines_url = _build_url("klines")
         params = {
-            "symbol": f"{symbol}USDT",
+            "symbol": f"{symbol.upper()}USDT",
             "interval": interval,
             "limit": limit
         }
-        response = requests.get(klines_url, params=params)
+        response = requests.get(klines_url, params=params, timeout=10)
         response.raise_for_status()
 
-        # 处理K线数据
-        df = pd.DataFrame(response.json(), columns=[
-            'timestamp', 'open', 'high', 'low', 'close', 'volume',
-            'close_time', 'quote_volume', 'trades', 'taker_buy_base',
-            'taker_buy_quote', 'ignore'
-        ])
+        # 整理为 DataFrame
+        df = pd.DataFrame(
+            response.json(),
+            columns=[
+                "timestamp", "open", "high", "low", "close", "volume",
+                "close_time", "quote_volume", "trades",
+                "taker_buy_base", "taker_buy_quote", "ignore"
+            ]
+        )
 
-        # 转换数据类型
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-        for col in ['open', 'high', 'low', 'close', 'volume']:
-            df[col] = df[col].astype(float)
+        # 类型转换
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        numeric_cols = ["open", "high", "low", "close", "volume"]
+        df[numeric_cols] = df[numeric_cols].astype(float)
 
         return df
+
     except Exception as e:
         st.error(f"获取K线数据时发生错误: {str(e)}")
         return None
+
 
 def calculate_indicators(df):
     """计算技术指标"""
