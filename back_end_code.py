@@ -69,49 +69,6 @@ TIMEFRAMES = {
     "1d": {"interval": "1d", "name": "日线"}
 }
 
-# def check_symbol_exists(symbol):
-#     """检查交易对是否存在"""
-#     try:
-#         info_url = f"{BINANCE_API_URL}/exchangeInfo" # Note: the api url may be different for different API url
-#         response = requests.get(info_url, timeout=10)
-#         response.raise_for_status()
-#         symbols = [s['symbol'] for s in response.json()['symbols']]
-#         return f"{symbol}USDT" in symbols
-#     except Exception as e:
-#         st.error(f"检查交易对时发生错误: {str(e)}")
-#         return False
-
-# def get_klines_data(symbol, interval, limit=200):
-#     """获取K线数据"""
-#     try:
-#         klines_url = f"{BINANCE_API_URL}/klines"
-#         params = {
-#             "symbol": f"{symbol}USDT",
-#             "interval": interval,
-#             "limit": limit
-#         }
-#         response = requests.get(klines_url, params=params)
-#         response.raise_for_status()
-
-#         # 处理K线数据
-#         df = pd.DataFrame(response.json(), columns=[
-#             'timestamp', 'open', 'high', 'low', 'close', 'volume',
-#             'close_time', 'quote_volume', 'trades', 'taker_buy_base',
-#             'taker_buy_quote', 'ignore'
-#         ])
-
-#         # 转换数据类型
-#         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-#         for col in ['open', 'high', 'low', 'close', 'volume']:
-#             df[col] = df[col].astype(float)
-
-#         return df
-#     except Exception as e:
-#         st.error(f"获取K线数据时发生错误: {str(e)}")
-#         return None
-
-
-
 
 
 # ========== 工具函数 ==========
